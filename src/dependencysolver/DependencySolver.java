@@ -16,12 +16,13 @@ import org.json.JSONArray;
 import org.json.JSONException;
 
 public class DependencySolver {
+  ArrayList<Package> currentlyInstalled;
   ArrayList<Package> packages;
   public DependencySolver(String[] args) throws JSONException, Exception{
     packages = new ArrayList();
-    JSONArray json = getJson(args);
-    for (int i = 0; i < json.length(); i++){
-      JSONObject obj = json.getJSONObject(i);
+    JSONArray repoJson = new JSONArray(args[0]);
+    for (int i = 0; i < repoJson.length(); i++){
+      JSONObject obj = repoJson.getJSONObject(i);
       ArrayList<String> dependancies = dependants(obj);
       ArrayList<String> conflicts = conflicts(obj);
       int packageSize = obj.getInt("size");
@@ -32,6 +33,16 @@ public class DependencySolver {
       System.out.println(p.getName() + " version " + p.getVersion());
       System.out.println("depends on " + p.getDependancies().toString());
       System.out.println("conflicts with " + p.getConflicts().toString());
+    }
+    
+    JSONArray initialJson = new JSONArray(args[1]);
+    System.out.println("**** **** initial state **** ****");
+    System.out.println(initialJson);
+    for (int i = 0; i < initialJson.length(); i++){
+      JSONObject obj = repoJson.getJSONObject(i);
+      System.out.println(obj.toString());
+//      Package p = new Package(obj.getString("name"), obj.getString("version"));
+//      currentlyInstalled.add(p);
     }
   }
   
@@ -62,13 +73,6 @@ public class DependencySolver {
       }
     }
     return dependants;
-  }
-  
-  
-  private JSONArray getJson(String[] args) throws JSONException, Exception {
-    String json = args[0];
-    JSONArray list = new JSONArray(json);
-    return list;
   }
   
   /**

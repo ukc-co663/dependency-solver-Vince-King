@@ -26,6 +26,14 @@ public class Package {
     this.conflicts = conflicts;
   }
   
+  public Package(String name, String version){
+    this.name = name;
+    this.version = version;
+    size = 0;
+    depends = null;
+    conflicts = null;
+  }
+  
   public String getName(){
     return name;
   }
