@@ -60,14 +60,6 @@ public class Main {
     for(String c : constraints){
       System.out.println(c);
     }
-// *****************************************
-
-   
-
-   
-   
-
-// *****************************************
   }
 
   private void uninstall(String packageToRemove) {
