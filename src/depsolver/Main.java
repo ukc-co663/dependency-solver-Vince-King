@@ -5,8 +5,11 @@ import com.alibaba.fastjson.TypeReference;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Arrays;
+
 
 class Package {
   private String name;
@@ -30,55 +33,69 @@ class Package {
 
 
 public class Main {
+static List<String> initial;
+static ArrayList<String> jsonCommands;
   public static void main(String[] args) throws IOException {
     TypeReference<List<Package>> repoType = new TypeReference<List<Package>>() {};
     List<Package> repo = JSON.parseObject(readFile(args[0]), repoType);
     TypeReference<List<String>> strListType = new TypeReference<List<String>>() {};
-    List<String> initial = JSON.parseObject(readFile(args[1]), strListType);
+    initial = JSON.parseObject(readFile(args[1]), strListType);
     List<String> constraints = JSON.parseObject(readFile(args[2]), strListType);
 
-    // CHANGE CODE BELOW:
-    // using repo, initial and constraints, compute a solution and print the answer
-    System.out.println("Already installed");
-    for(String s : initial){
-      System.out.println(s);
-    }
 
-    System.out.println("We have available in the repo");
-    for (Package p : repo) {
-      System.out.printf("package %s version %s\n", p.getName(), p.getVersion());
-      for (List<String> clause : p.getDepends()) {
-        System.out.printf("  dep:");
-        for (String q : clause) {
-          System.out.printf(" %s", q);
-        }
-        System.out.printf("\n");
+// *****************************************
+    jsonCommands = new ArrayList<String>();
+    for(String c : constraints){
+      if(c.charAt(0) == '+'){
+        install(c);
+      } else if(c.charAt(0) == '-'){
+        uninstall(c);
+      } else {
+        System.out.println("unknown sign, avoiding " + c + "as unknown constraint"); 
       }
     }
+    String output = JSON.toJSONString(jsonCommands);
+    System.out.println(output);
+    PrintWriter writer = new PrintWriter("commands.json", "UTF-8");
+    writer.println(output);
+    writer.close();
+  }
 
-    System.out.println("and we have the following instructions / constraints:");
-    for(String c : constraints){
-      System.out.println(c);
+  private static void uninstall(String packageToRemove) {
+    if(isInstalled(packageToRemove)){
+      System.out.println("package "+ packageToRemove +" is being uninstalled");
+      jsonCommands.add(packageToRemove);
+    } else {
+      System.out.println("package "+ packageToRemove +" is not installed");
     }
+  }
+
+  private static void install(String packageToInstall) {
+    if(!isInstalled(packageToInstall)){
+      System.out.println("package " + packageToInstall +" needs to be installed");
+      jsonCommands.add(packageToInstall);
+    } else {
+      System.out.println("package "+ packageToInstall +" is already installed");
+    }
+  }
+
+  private static boolean isInstalled(String pName){
+    String name = pName.substring(1, pName.length());
+    String[] details = name.split("=");
+    for(String s : initial){
+      if(s.contains(details[0])){
+        String[] v = s.split("=");
+        String installedVersion = v[1];
+        String requestedVersion = details[1];
+        if(installedVersion.equals(requestedVersion)){
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
 // *****************************************
-
-   
-
-   
-   
-
-// *****************************************
-  }
-
-  private void uninstall(String packageToRemove) {
-    System.out.println("in uninstall");
-  }
-
-  private void install(String packageToInstall) {
-    System.out.println("In install");
-  }
-
-
   static String readFile(String filename) throws IOException {
     BufferedReader br = new BufferedReader(new FileReader(filename));
     StringBuilder sb = new StringBuilder();
