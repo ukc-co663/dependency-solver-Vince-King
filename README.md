@@ -1,1 +1,2 @@
-# dependency-solver-Vince-King
+# depsolver-StartJava
+Scaffolding for Java projects
