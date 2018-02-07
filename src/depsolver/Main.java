@@ -17,7 +17,7 @@ class Package {
   private Integer size;
   private List<List<String>> depends = new ArrayList<>();
   private List<String> conflicts = new ArrayList<>();
-
+  
   public String getName() { return name; }
   public String getVersion() { return version; }
   public Integer getSize() { return size; }
@@ -33,17 +33,23 @@ class Package {
 
 
 public class Main {
-static List<String> initial;
-static ArrayList<String> jsonCommands;
+  private static List<Package> repo;
+  private static List<String> initial;
+  private static ArrayList<String> jsonCommands;
+  private static ArrayList<String> packageNames;
   public static void main(String[] args) throws IOException {
     TypeReference<List<Package>> repoType = new TypeReference<List<Package>>() {};
-    List<Package> repo = JSON.parseObject(readFile(args[0]), repoType);
+    repo = JSON.parseObject(readFile(args[0]), repoType);
     TypeReference<List<String>> strListType = new TypeReference<List<String>>() {};
     initial = JSON.parseObject(readFile(args[1]), strListType);
     List<String> constraints = JSON.parseObject(readFile(args[2]), strListType);
 
 
 // *****************************************
+    packageNames = new ArrayList<String>();
+    for(Package p : repo){
+      packageNames.add(p.getName());
+    }
     jsonCommands = new ArrayList<String>();
     for(String c : constraints){
       if(c.charAt(0) == '+'){
@@ -72,11 +78,46 @@ static ArrayList<String> jsonCommands;
 
   private static void install(String packageToInstall) {
     if(!isInstalled(packageToInstall)){
+      // check package is in repo
+      String[] packageParts= trimAndSplit(packageToInstall);
+      String pName = packageParts[0].substring(1, packageParts[0].length());
+      String version = "0.0";
+      if(packageParts.length > 1){
+        version = packageParts[1];
+        System.out.println("was greater than 1");
+      }
+      
+      if(packageNames.contains(pName)){
+        for(Package p : repo){
+          if(p.getName().equals(pName)){
+            System.out.println("Package " + pName +" version "+ version +" is in position " + packageNames.indexOf(pName));
+            //find all dependecies
+            List<List<String>> deps = p.getDepends();
+            for(List l : deps){
+              for(Object d : l){
+                System.out.println("found dependency " + d);
+              }
+            
+            }
+            // find possible instalation options
+            //foreach possible option
+            //find all sub dependencies
+          }
+        }
+        
+      
       System.out.println("package " + packageToInstall +" needs to be installed");
       jsonCommands.add(packageToInstall);
+      } else {System.out.println("Could not find requested package in current repository");}
+      
     } else {
       System.out.println("package "+ packageToInstall +" is already installed");
     }
+  }
+  
+  private static String[] trimAndSplit(String packageToInstall){
+    String[] parts = packageToInstall.split("=");
+    return parts;
   }
 
   private static boolean isInstalled(String pName){
