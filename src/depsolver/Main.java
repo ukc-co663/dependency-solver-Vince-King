@@ -9,6 +9,9 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Arrays;
+import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 
 
 class Package {
@@ -35,6 +38,7 @@ class Package {
 public class Main {
   private static List<Package> repo;
   private static List<String> initial;
+  private static Map<Package, Map<Package, Boolean>> packageConstraints; 
   private static ArrayList<String> jsonCommands;
   private static ArrayList<String> packageNames;
   public static void main(String[] args) throws IOException {
@@ -44,12 +48,117 @@ public class Main {
     initial = JSON.parseObject(readFile(args[1]), strListType);
     List<String> constraints = JSON.parseObject(readFile(args[2]), strListType);
 
-
 // *****************************************
-    packageNames = new ArrayList<String>();
+System.out.println("repo contains" );
     for(Package p : repo){
+      System.out.println(p.getName());
+    }
+    packageConstraints = new HashMap<Package, Map<Package, Boolean>>();
+    packageNames = new ArrayList<String>();
+       System.out.println("Started"); 
+    for(Package p : repo){
+        System.out.println("the package is " + p.getName() + " v: " + p.getVersion());
+      ArrayList<String> con = (ArrayList)p.getConflicts();
+        System.out.println("the conflicts for " + p.getName() + " v: " + p.getVersion() + " are " + con);
+      ArrayList<ArrayList<String>> deps = (ArrayList)p.getDepends();
+      Map<Package, Boolean> cons = new HashMap<Package, Boolean>();
+      for(String s : con){
+          //identify the package from the repo
+          
+          boolean packageFound = false;
+          int counter = 0;
+          int index = 0;
+          while(!packageFound && counter < repo.size()){
+            System.out.println("the name is " + repo.get(counter).getName());
+            if(s.contains(repo.get(counter).getName())){
+              System.out.println("looking for conflict" + s);
+              String operator = s.substring(repo.get(counter).getName().length(), s.length());
+              String version = "";
+              System.out.println("operator is " + operator);
+              if(!operator.equals("")){
+                if(operator.charAt(1) == '=' || operator.charAt(1) == '>' || operator.charAt(1) == '<'){
+                  version = operator.substring(2, operator.length());
+                  operator = operator.substring(0, 2);
+                } else {
+                  version = operator.substring(1, operator.length());
+                  operator = operator.substring(0, 1);
+                }
+                  System.out.println("version = " + version);
+              } else {
+                System.out.println("avoid all versions of " + s);
+              }
+              
+              System.out.println("the operator is now " + operator);
+              boolean operatorIdentified = false;
+              float conflictingVersionNumber;
+              if(!version.equals("")){
+                conflictingVersionNumber = Float.parseFloat(version);
+              } else {
+                conflictingVersionNumber = 0.0f;
+              }
+                System.out.println("the conflicting version = " + conflictingVersionNumber);
+                
+              float reposVersionNumber = Float.parseFloat(repo.get(counter).getVersion());
+              System.out.println("the repos version = " + reposVersionNumber);
+              if(operator.equals("<") && reposVersionNumber < conflictingVersionNumber && conflictingVersionNumber != 0.0f){
+                System.out.println("conflict with version: " + version);
+              } else if (operator.equals("=") && conflictingVersionNumber == reposVersionNumber && conflictingVersionNumber != 0.0f){
+                operatorIdentified = true;
+                System.out.println("conflict with version : " + version);
+              } else if (operator.equals('>') && reposVersionNumber > conflictingVersionNumber && conflictingVersionNumber != 0.0f){
+                operatorIdentified = true;
+                System.out.println("conflict with version: " + version);
+              } else if (operator.equals(">=") && reposVersionNumber >= conflictingVersionNumber && conflictingVersionNumber != 0.0f){
+                operatorIdentified = true;
+                System.out.println("conflict with version: " + version);
+              } else if (operator.equals("<=") && reposVersionNumber <= conflictingVersionNumber && conflictingVersionNumber != 0.0f){
+                operatorIdentified = true;
+                System.out.println("conflict with version: " + version);
+              } else if (operator.equals("")){
+                operatorIdentified = true;
+                System.out.println("no version can be used");
+              } else {
+                System.out.println("no issue with this version");
+              }
+              if(operatorIdentified){
+                packageFound = true;
+                index = counter;
+                cons.put(repo.get(index), false);
+                System.out.println("there is a conflict in the repo, avoid using " + repo.get(counter).getName() + " version " + repo.get(counter).getVersion());
+              }
+              
+            } 
+            counter ++;
+          }
+          
+      }
+      System.out.println("the dependencies for " + p.getName() + " are " + deps);
+      for(ArrayList<String> listOfDeps : deps){
+        for(String s : listOfDeps){
+          //identify the package from the repo
+          System.out.println("looking for dep " + s);
+          boolean packageFound = false;
+          int counter = 0;
+          int index = 0;
+          while(!packageFound && counter < repo.size()){
+            if(s.contains(repo.get(counter).getName())){
+              packageFound = true;
+              index = counter;
+              cons.put(repo.get(index), true);
+                System.out.println("found");
+            } 
+            counter ++;
+          }
+        }
+      }
+      //list of packages with a list of deps and conflicts
+      packageConstraints.put(p,cons);
       packageNames.add(p.getName());
     }
+    
+      System.out.println("The Hashmap contains");
+      System.out.println(packageConstraints);
+        
     jsonCommands = new ArrayList<String>();
     for(String c : constraints){
       if(c.charAt(0) == '+'){
