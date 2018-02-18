@@ -57,22 +57,21 @@ System.out.println("repo contains" );
     packageNames = new ArrayList<String>();
        System.out.println("Started"); 
     for(Package p : repo){
-        System.out.println("the package is " + p.getName() + " v: " + p.getVersion());
+      System.out.println("the package is " + p.getName() + " v: " + p.getVersion());
       ArrayList<String> con = (ArrayList)p.getConflicts();
-        System.out.println("the conflicts for " + p.getName() + " v: " + p.getVersion() + " are " + con);
+      System.out.println("the conflicts for " + p.getName() + " v: " + p.getVersion() + " are " + con);
       ArrayList<ArrayList<String>> deps = (ArrayList)p.getDepends();
       Map<Package, Boolean> cons = new HashMap<Package, Boolean>();
       for(String s : con){
           //identify the package from the repo
           
-          boolean packageFound = false;
-          int counter = 0;
-          int index = 0;
-          while(!packageFound && counter < repo.size()){
-            System.out.println("the name is " + repo.get(counter).getName());
-            if(s.contains(repo.get(counter).getName())){
+        
+          
+          for(int i = 0; i < repo.size(); i++){
+            System.out.println("the name is " + repo.get(i).getName());
+            if(s.contains(repo.get(i).getName())){
               System.out.println("looking for conflict" + s);
-              String operator = s.substring(repo.get(counter).getName().length(), s.length());
+              String operator = s.substring(repo.get(i).getName().length(), s.length());
               String version = "";
               System.out.println("operator is " + operator);
               if(!operator.equals("")){
@@ -98,9 +97,10 @@ System.out.println("repo contains" );
               }
                 System.out.println("the conflicting version = " + conflictingVersionNumber);
                 
-              float reposVersionNumber = Float.parseFloat(repo.get(counter).getVersion());
+              float reposVersionNumber = Float.parseFloat(repo.get(i).getVersion());
               System.out.println("the repos version = " + reposVersionNumber);
               if(operator.equals("<") && reposVersionNumber < conflictingVersionNumber && conflictingVersionNumber != 0.0f){
+                operatorIdentified = true;
                 System.out.println("conflict with version: " + version);
               } else if (operator.equals("=") && conflictingVersionNumber == reposVersionNumber && conflictingVersionNumber != 0.0f){
                 operatorIdentified = true;
@@ -121,14 +121,13 @@ System.out.println("repo contains" );
                 System.out.println("no issue with this version");
               }
               if(operatorIdentified){
-                packageFound = true;
-                index = counter;
-                cons.put(repo.get(index), false);
-                System.out.println("there is a conflict in the repo, avoid using " + repo.get(counter).getName() + " version " + repo.get(counter).getVersion());
+                
+                cons.put(repo.get(i), false);
+                System.out.println("there is a conflict in the repo, avoid using " + repo.get(i).getName() + " version " + repo.get(i).getVersion());
               }
               
             } 
-            counter ++;
+            
           }
           
       }
@@ -157,7 +156,13 @@ System.out.println("repo contains" );
     }
     
       System.out.println("The Hashmap contains");
-      System.out.println(packageConstraints);
+      for(Map.Entry<Package, Map<Package, Boolean>> pkg : packageConstraints.entrySet()){
+         System.out.println("package " + pkg.getKey().getName());
+         Map<Package, Boolean> conflicts = pkg.getValue();
+         for(Map.Entry<Package, Boolean> consts : conflicts.entrySet()){
+           System.out.println("constraint " + consts.getKey().getName() + " " + consts.getKey().getVersion() + " " + consts.getValue());
+         }
+      }
         
     jsonCommands = new ArrayList<String>();
     for(String c : constraints){
